@@ -4,35 +4,42 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 # ------------------------
-# Load CSV
+# Load CSVs
 # ------------------------
 CSV_PATH = "data/training_plan.csv"
 df = pd.read_csv(CSV_PATH)
 df.columns = [c.strip() for c in df.columns]
 
-# try weekend column variants
-weekend_col_candidates = ["Weekend Long Run!", "Weekend Long Run", "Weekend Long Run !"]
-weekend_col = next((c for c in weekend_col_candidates if c in df.columns), None)
-if weekend_col is None:
-    weekend_col = df.columns[3] if len(df.columns) > 3 else None
+weekend_col = "Weekend Long Run!"
+
+
+# -----------------------
+# Load Strava Activities
+
+STRAVA_CSV_PATH = "strava_activities.csv"
+try:
+    strava_df = pd.read_csv(STRAVA_CSV_PATH)
+except FileNotFoundError:
+    strava_df = pd.DataFrame()
+
 
 # ------------------------
 # Parse date ranges
 # ------------------------
-def parse_range(date_range):
+def parse_range(date_range):        # usually a string like "2025-12-02 to 2025-12-08"
     if pd.isna(date_range):
-        return None, None
-    parts = date_range.strip().split("to")
-    if len(parts) != 2:
+        return None, None  # if empty / NaN -> returns nothing
+    parts = date_range.strip().split("to") # strip string
+    if len(parts) != 2: # incase the format is wrong
         return None, None
     start_dt = datetime.strptime(parts[0].strip(), "%Y-%m-%d").date()
     end_dt   = datetime.strptime(parts[1].strip(), "%Y-%m-%d").date()
     return start_dt, end_dt
 
 # Map weeks to their date ranges and workouts
-weeks = []
+weeks = [] # to store 1 dict per train. week
 for idx, row in df.iterrows():
-    start_dt, end_dt = parse_range(row["Date Range"])
+    start_dt, end_dt = parse_range(row["Date Range"]) #get start/end_dt
     if not start_dt or not end_dt:
         continue
     weeks.append({
@@ -73,14 +80,11 @@ for col, (label, workout) in zip(cols, workouts):
         key = f"{week_data['week']}_{label}"
         st.checkbox(f"{label}\n{workout}", key=key)
 
-# ------------------------
-# Minimal styling helper (optional)
-# ------------------------
-def workout_color(text):
-    t = str(text).lower()
-    if "interval" in t: return "#e63946"
-    if "tempo" in t: return "#ff8800"
-    if "race" in t: return "#7028ff"
-    if "easy" in t: return "#0077b6"
-    if "long" in t: return "#2a9d8f"
-    return "#6c757d"
+# ----------- Strava stats For now:
+
+if not strava_df.empty:
+    st.markdown("---")
+    st.subheader("Strava Activities!")
+    st.dataframe(strava_df)
+else:
+    st.info("No activities found.")
