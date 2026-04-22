@@ -2,7 +2,7 @@ import requests
 
 client_id = "195827"
 client_secret = "131350dba2490dca752c837f92cd6f01a33cb6b8"
-code = "ecb6b9ccd9485447dccb8ff818f8b449f979306a"
+code = "60057a02df3f15cfc792f0004d2d98424c06b1f4"
 
 response = requests.post(
     "https://www.strava.com/oauth/token",

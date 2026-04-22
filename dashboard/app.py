@@ -19,6 +19,7 @@ weekend_col = "Weekend Long Run!"
 STRAVA_CSV_PATH = "strava_activities.csv"
 try:
     strava_df = pd.read_csv(STRAVA_CSV_PATH)
+    strava_df['start_date_local'] = pd.to_datetime(strava_df['start_date_local'])
 except FileNotFoundError:
     strava_df = pd.DataFrame()
 
@@ -84,7 +85,23 @@ for col, (label, workout) in zip(cols, workouts):
 
 if not strava_df.empty:
     st.markdown("---")
-    st.subheader("Strava Activities!")
+    st.subheader("My Strava Stats")
+    col1, col2 = st.columns(2)
+
+# Counter 1 # total km run
+    total_km = strava_df['distance'].sum()
+    col1.metric("Total Distance", f"{total_km:.2f} km")
+# Counter 2 # total runs made
+    total_runs = len(strava_df)
+    col2.metric("Total Runs", total_runs)
+
     st.dataframe(strava_df)
 else:
     st.info("No activities found.")
+
+
+# Graph Strava Activities Over time
+# Create table where each row is one day of running
+chart_data = strava_df.groupby('start_date_local')['distance'].sum()
+st.markdown("### Distance Over Time")
+st.line_chart(chart_data)
